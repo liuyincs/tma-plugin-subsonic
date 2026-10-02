@@ -231,11 +231,12 @@ fn cover_art(request: PluginHttpRequest) -> Result<PluginHttpResponse, PluginErr
     if param(&request, "size").is_some() {
         return Err(protocol_error(0, "暂不支持按 size 缩放封面"));
     }
-    let media_id = if id.starts_with("cover:") {
-        id
-    } else {
-        format!("cover:{id}")
-    };
+    let media_id =
+        if id.starts_with("cover:") || id.starts_with("track:") || id.starts_with("artist:") {
+            id
+        } else {
+            format!("cover:{id}")
+        };
     let response = unsafe {
         tma_media_stream(Json(MediaStreamRequest {
             version: CAPABILITY_DTO_VERSION,
