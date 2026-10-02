@@ -1,0 +1,65 @@
+name: Release plugin
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  RUST_TOOLCHAIN: stable
+  TMA_PLUGIN_DEV_REV: ${{ vars.TMA_PLUGIN_DEV_REV }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          target: wasm32-unknown-unknown
+      - name: Check manifest and catalog
+        run: cargo test --quiet
+      - name: Check release metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          test "$RELEASE_TAG" = "v$(python3 -c 'import json; print(json.load(open("manifest.json"))["version"])')"
+          test "$(python3 -c 'import json; print(json.load(open("catalog.json"))["plugins"][0]["version"])')" = "$(python3 -c 'import json; print(json.load(open("manifest.json"))["version"])')"
+          test "$(python3 -c 'import json; print(json.load(open("catalog.json"))["plugins"][0]["id"])')" = "$(python3 -c 'import json; print(json.load(open("manifest.json"))["id"])')"
+          actual_key_fingerprint=$(python3 -c 'import json; print(json.load(open("catalog.json"))["plugins"][0]["public_key_fingerprint"])')
+          expected_key_fingerprint="sha256:$(python3 -c 'import base64, hashlib; print(hashlib.sha256(base64.b64decode(open("public-key.txt").read())).hexdigest())')"
+          test "$actual_key_fingerprint" = "$expected_key_fingerprint"
+      - name: Build WASM
+        run: cargo build --target wasm32-unknown-unknown --release
+      - name: Install TMA plugin tool
+        run: |
+          # Keep this explicitly revision-pinned before enabling releases. The
+          # public TMA repository currently has no ABI 1.6 revision, so the
+          # workflow must remain blocked rather than producing an unreproducible
+          # package from a moving branch.
+          test -n "${TMA_PLUGIN_DEV_REV:-}" || {
+            echo "TMA_PLUGIN_DEV_REV is required once the public TMA ABI 1.6 release exists" >&2
+            exit 1
+          }
+          cargo install --git https://github.com/liuyincs/tma.git --rev "$TMA_PLUGIN_DEV_REV" --bin tma-plugin-dev --locked
+      - name: Assemble package
+        env:
+          TMA_PLUGIN_SIGNING_KEY: ${{ secrets.TMA_PLUGIN_SUBSONIC_SIGNING_KEY }}
+        run: |
+          TMA_PLUGIN_DEV=tma-plugin-dev TMA_PLUGIN_SIGNING_KEY_B64="$TMA_PLUGIN_SIGNING_KEY" scripts/build-package.sh
+      - name: Update release catalog
+        run: python3 scripts/update-catalog-sha.py subsonic.tmap.sha256
+      - name: Validate package
+        run: test "$(sha256sum subsonic.tmap | awk '{print $1}')" = "$(awk '{print $1}' subsonic.tmap.sha256)"
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            subsonic.tmap
+            subsonic.tmap.sha256
+            catalog.json
+            compatibility.md

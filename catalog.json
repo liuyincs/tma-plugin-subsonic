@@ -1,0 +1,47 @@
+{
+  "name": "TMA Community Plugins",
+  "plugins": [
+    {
+      "id": "tma.community.subsonic",
+      "name": "Subsonic / OpenSubsonic",
+      "version": "0.1.0",
+      "description": "只读 Subsonic/OpenSubsonic 适配器，支持曲库浏览、封面、Range 播放和宿主转码。",
+      "author": "liuyincs",
+      "homepage": "https://github.com/liuyincs/tma-plugin-subsonic",
+      "abi": {
+        "min": {
+          "major": 1,
+          "minor": 6
+        },
+        "max": {
+          "major": 1,
+          "minor": 6
+        }
+      },
+      "permissions": [
+        {
+          "capability": {
+            "name": "catalog.read",
+            "reason": "浏览当前用户可见的音乐目录"
+          }
+        },
+        {
+          "capability": {
+            "name": "identity.read",
+            "reason": "将 Subsonic 客户端认证映射到当前用户"
+          }
+        },
+        {
+          "capability": {
+            "name": "media.stream",
+            "reason": "播放当前用户可见的曲目"
+          }
+        }
+      ],
+      "download_url": "https://github.com/liuyincs/tma-plugin-subsonic/releases/download/v0.1.0/subsonic.tmap",
+      "sha256": "3506fe8229e9e85c64419a81f761ab93dafd8ac9becc467dea34631c16dfc2d3",
+      "public_key_url": "https://raw.githubusercontent.com/liuyincs/tma-plugin-subsonic/v0.1.0/public-key.txt",
+      "public_key_fingerprint": "sha256:9b2970c24e025a17bf83dbef1f31e6614b3eb5953b5823dba6a7690e83b9df93"
+    }
+  ]
+}

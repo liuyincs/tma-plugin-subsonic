@@ -1,0 +1,30 @@
+[workspace]
+members = ["."]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+license = "MIT"
+
+[package]
+name = "tma-plugin-subsonic"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "0.22"
+extism-pdk = { version = "1.4", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# The host contract is released from the TMA repository. The public repository
+# currently has no ABI 1.6 revision, so this remains an explicit release block;
+# replace `branch = "main"` with an immutable `rev` before publishing and
+# regenerate Cargo.lock from that revision.
+tma-plugin-api = { git = "https://github.com/liuyincs/tma.git", package = "tma-plugin-api", branch = "main" }

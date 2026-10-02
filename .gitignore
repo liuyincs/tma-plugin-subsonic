@@ -1,0 +1,8 @@
+/target/
+plugin.wasm
+*.tmap
+*.tmap.sha256
+*.aot
+*.key
+*.key.b64
+.env*
